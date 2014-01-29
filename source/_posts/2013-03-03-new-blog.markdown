@@ -1,0 +1,15 @@
+---
+author: Pedro Gil Candeias
+layout: post
+title: New blog
+date: 2013-03-03 02:24:22 +0000
+comments: true
+categories:
+---
+
+I've been meaning to build my own blogging app for a while now. Something simpler than my current blog at Posterous, without all the client-side scripts and extraneous social features.
+
+Now that Posterous is [shutting down](http://blog.posterous.com/thanks-from-posterous), I'm out of excuses. So here it is. Check out the [source](https://github.com/pgscandeias/blog).
+
+By the way, my old posts from Posterous can be found here:  
+[http://pedrogilcandeias.wordpress.com/](http://pedrogilcandeias.wordpress.com/)
