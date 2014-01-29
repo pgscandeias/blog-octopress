@@ -9,10 +9,7 @@
   <meta name="author" content="Pedro Gil Candeias">
 
   
-  <meta name="description" content="Título do teste Algum texto &lt;?php
-echo "hello world"; E um pouco de código.
-Nice.
-">
+  <meta name="description" content="I had a couple of hours to kill on a train journey recently and decided to compare a few php frameworks just for kicks. The goal of the test was &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -58,6 +55,8 @@ Nice.
   
 <ul class="main-navigation">
   <li><a href="/">Blog</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/projects">Projects</a></li>
   <li><a href="/blog/archives">Archives</a></li>
 </ul>
 
@@ -72,7 +71,7 @@ Nice.
       
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2014/01/28/a-testar-o-octopress/">A Testar O Octopress</a></h1>
+      <h1 class="entry-title"><a href="/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp/">Symfony vs Laravel vs Codeigniter vs Plain PHP</a></h1>
     
     
       <p class="meta">
@@ -88,23 +87,597 @@ Nice.
   
 
 
-<time datetime="2014-01-28T16:15:54+00:00" pubdate data-updated="true">Jan 28<span>th</span>, 2014</time>
+<time datetime="2013-08-13T11:12:24+01:00" pubdate data-updated="true">Aug 13<span>th</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><h1>Título do teste</h1>
+  <div class="entry-content"><p>I had a couple of hours to kill on a train journey recently and decided to compare a few php frameworks just for kicks. The goal of the test was twofold:</p>
 
-<p>Algum texto</p>
+<ul>
+<li>Measure performance overhead</li>
+<li>Compare the coding styles encouraged by each framework</li>
+</ul>
 
-<pre><code>&lt;?php
-echo "hello world";
+
+<p>A Debian7 / nginx  / php 5.5 VM was spun up using Vagrant, with pretty much the default settings. Opcache was enabled, but otherwise no caching was involved. A mysql 5.5 database was created, with a &lsquo;custmers&rsquo; table holding 200 rows. Benchmarks were to be conducted on a page displaying the first N customers, as specified by a &lsquo;count&rsquo; querystring parameter. A benchmark was conducted upon a static file in order to get a baseline performance reading.</p>
+
+<p><strong>Disclaimer</strong>: these tests were <strong>not</strong> conducted with anything resembling statistical rigour. And, as is the case with all things benchmarky, your mileage may and will bloody well vary.</p>
+
+<p>With that out of the way&hellip;</p>
+
+<p><em>Setup</em></p>
+
+<pre><code>Host:   OSX 10.8.4 / Intel i5 2.3Ghz / 8Gb / SSD
+VM:     VirtualBox + Debian Wheezy / 1Gb
+
+Stack:  nginx 1.4.2 / php5-fpm / php 5.5.0 / mysql 5.5.31
 </code></pre>
 
-<p>E um pouco de código.
-Nice.</p>
+<p><em>Read top $count records from the customers table and render a template with that information.</em></p>
+
+<pre><code>ab -c 5 -n 1000 http://bench.(*).dev/customers?count=5
+</code></pre>
+
+<h2>Results</h2>
+
+<pre><code>Framework           ORM         Templating  Req/s       Time /req
+
+static file         -           -           2654.53     1.884
+
+Symfony 2.3.5       Doctrine    Twig        50.83       98.365
+Laravel 4           Eloquent    Blade       54.43       92.006
+Codeigniter 2.1.4   CI_Model    php         302.28      16.541
+Bespoke PHP         -           php         433.33      11.538
+Single file php     -           php         1624.66     3.078
+</code></pre>
+
+<p><strong>Bespoke PHP</strong> was a piece of custom code consisting of a light routing library matching url patterns to anonymous functions in the style of microframeworks like Slim and Silex.</p>
+
+<p><strong>Single file php</strong>, like the name implies, was a single file with database access at the top and html mixed with php at the bottom. Just like old times.</p>
+
+<h2>Thoughts</h2>
+
+<p><strong>Symfony</strong> has the greatest overhead, as expected. Every single request runs through lots and lots of classes, providing hook points for injecting code at any point; an opcode cache mitigates the problem, but there&rsquo;s no way around running lots of code.</p>
+
+<p>The good news is that, with PSR-0 autoloading and a decent dependency injection container, it&rsquo;s quite clever about what it runs after the bare minimum. Even if you have a huge application with lots of models, controllers and assorted libraries, it only loads what it needs for each request. So yes, all of Symfony&rsquo;s flexibility implies quite some base overhead, but resource consumption doesn&rsquo;t necessarily grow with the application.</p>
+
+<p>There&rsquo;s a lot of quality bundles available at <a href="https://packagist.org/search/?q=symfony">Packagist</a>, documentation is second to none and, despite heavy development, stuff rarely breaks on new releases. When something does break, chances are someone caught it before you did and documented the solution &ndash; which is usually pulled into the next release very quickly.</p>
+
+<p>Symfony configuration does tend to be quite dense and its namespacing practices do lean towards the verbose. But on the other hand, everything is nicely decoupled. Testing and reusing code comes very naturally in a Symfony project.</p>
+
+<p><strong>Laravel</strong> is touted as a great alternative to Codeigniter, mixing its simple interface with the power of Composer-driven package management. It uses a LOT of Symfony components, to the point where I find using Laravel is a bit like running Symfony with different ORM and templating engines. It sits somewhere between Silex and Symfony in complexity and available toolset.</p>
+
+<p>Why they introduced yet another ORM and templating engine, though, is beyond me. Blade has an inconsistent interface, using brackets for output and @ signs for control structures. Eloquent is&hellip; a bit weird. Better than Codeigniter&rsquo;s active record implementation for sure, but it felt about as ugly to use. Laravel also makes extensive use of Singletons, which I find very strange in a framework that&rsquo;s based on Symfony. Singletons are a bit of a cheat, essentialy serving as global variables. They have their uses, but have little raison d&#8217;être when a dependency injection container is available.</p>
+
+<p>I was a bit surprised at Laravel benchmarking neck and neck with Symfony in terms of speed. But considering both frameworks are based on the same foundation, this test was quite simple and Symfony only loads what it needs, the results make sense.</p>
+
+<p><strong>Codeigniter</strong> benefits tremendously from its inherent simplicity in this sort of benchmark. In this scenario, CI executes little else beyond database initialization and route matching before calling the controller so it does go like the clappers as advertised. Trouble is, it&rsquo;s not very bright. Its router has no knowledge of HTTP methods other than GET, its request handler only adds POST to that list, there are no options to serialize responses to anything other than html and it proudly advocates plain old php as the templating engine. Which is a fine choice if you&rsquo;re looking for raw speed but not very good for maintainability at all. And the less said about CI&rsquo;s idea of an ActiveRecord implementation, the better.</p>
+
+<p>Then there&rsquo;s the killer. Codeigniter, having no idea the PSR0 exists or even that php5.3 is out, does not employ namespacing. To prevent class name collisions, its core classes have silly olde style names like <code>CI_Model</code> and <code>CI_DB_MySQL</code>. And should you wish to use libraries, or plugins, or helpers, which so far as I can tell differ only in the folder they&rsquo;re installed in, you must declare them all in the bootstrapper. Which duly loads them to memory. It&rsquo;s easy to see how this can become a problem on larger applications with lots of libraries.</p>
+
+<p>On simple projects, Codeigniter is good enough. On more compelex ones, its shortcomings can be overcome by simply relegating it to the role of router and using Composer to install a better ORM, an actual templating engine, whatever libraries are needed, etc. But then why use CI at all? It&rsquo;ll just be a bad router getting in the way of your application.</p>
+
+<p>Codeigniter was great in its day. That day is now well and truly past, and no amount of <code>Hello World</code> speed can make up for its flaws.</p>
+
+<h2>Closing words</h2>
+
+<p>The very act of using a framework is a choice of convenience over speed. Frameworks bring order to chaos, speed to both early and late stages of development. That convenience costs performance, but we use them anyway because, in most places, developer time is way more expensive than server time. In most places, most of the time, you can easily add more servers to your frontend cluster or beef up your database machines. But hiring new skilled developers is hard enough; convincing good developers to work in messy, unstructured codebases these days is a hard sale indeed.</p>
+
+<p>I like Symfony. It makes development logical and, dare I say it, easy. I&rsquo;ve been using it for most of my personal projects and all of my freelancing ones for over two years now. There&rsquo;s a steep learning curve, but the exceptional documentation makes it easy to climb. And it encourages the use of good programming practices like inversion of control, dependency injection, single resposibility principle, and more. Performance wise, commodity servers like DigitalOcean&rsquo;s $5 vps can run it at well below 100ms per request under moderate loads, making scale issues moot for web apps in their early stages. I wouldn&rsquo;t run an ad network on it, though.</p>
+
+<p>If I did have to deploy something like an ad network in php, I&rsquo;d probably go for bespoke code on the frontends <em>but</em> code the backoffices in Symfony simply due to how good the toolset is and how maintainable Symfony projects end up being. I&rsquo;m not convinced Laravel, with its limited configuration options and opinionated development practices is a better choice, especially since it doesn&rsquo;t bring a significant performance boost to the table. It may be easier to get into, though, which is in itself a huge plus and just might make it the right framework for many projects.</p>
+
+<p>As for Codeigniter, well, we have a big project running on it at work and lets just say thing aren&rsquo;t getting any easier.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/06/14/reusing-my-own-code-with-composer/">Reusing My Own Code With Composer</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-14T14:11:15+01:00" pubdate data-updated="true">Jun 14<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Composer</h2>
+
+<p><a href="https://getcomposer.org">Composer</a> is a package manager for php that&rsquo;s gained a lot of traction lately. It ties in nicely with version control systems like git, greatly simplifies dependency management, and has a lot of great packages at <a href="https://packagist.org/">Packagist</a>.</p>
+
+<p><a href="http://symfony.com">Symfony</a>, an extremely popular php framework, has been using Composer since version 2.1, which is only logical as both tools leverage the <a href="https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md">PSR-0</a> interoperability standard. <a href="http://silex.sensiolabs.org">Silex</a> too, Symfony&rsquo;s lightweight brother, uses Composer for installation and dependency management.</p>
+
+<h2>In practice</h2>
+
+<p>Which brings me nicely to a product I&rsquo;m currently building. It&rsquo;s a landing page platform for online marketing campaigns, and it&rsquo;s split in two sub-projects:</p>
+
+<ul>
+<li>The client and administration backoffices, made in Symfony;</li>
+<li>A separate website in Silex just for serving the landing pages and gathering data.</li>
+</ul>
+
+
+<p>Both websites are written in php and talk to the same database, which means there&rsquo;s a clear opportunity for reusing the database access code. I could simply copy my Symfony entities over to the Silex application, but then I&rsquo;d need to keep track of changes in my head and manually ensure both projects were up to date.</p>
+
+<p>Or I could move the entities into their own bundle, turn it into a separate project versioned with git, and use Composer to install and manage it in both websites like a boss.</p>
+
+<h3>Isolating the entities</h3>
+
+<p>I began by moving them into a separate bundle called simply My\EntitiesBundle, dropping them nicely in the <code>src/My/EntitiesBundle/Entity</code> folder and running a quick find &amp; replace to update their namespaces and all the <code>use</code> statements. Because Symfony2 bundles follow the PSR-0, I was already halfway done.</p>
+
+<h3>Creating a package</h3>
+
+<p>1) Move the bundle somewhere outside of the Symfony app. This will be the package.</p>
+
+<pre><code>cd {symfony root}
+mkdir -p ../entitiesbundle/lib/My
+mv src/My/EntitiesBundle ../entitiesbundle/lib/My
+</code></pre>
+
+<p>2) Then create <code>composer.json</code> at the package root</p>
+
+<pre><code>{
+    "name": "my/entitiesbundle",
+    "type": "library",
+    "description": "Doctrine entities for the Tranquility project",
+    "license": "private",
+    "authors": [
+        {
+            "name": "Pedro Gil Candeias",
+            "email": "pedro@pedrogilcandeias.com"
+        }
+    ],
+    "require": {
+        "php": "&gt;=5.3.0",
+        "friendsofsymfony/user-bundle": "*",
+        "doctrine/orm": "~2.2,&gt;=2.2.3",
+        "doctrine/doctrine-bundle": "1.2.*"
+    },
+    "autoload": {
+        "psr-0": {"My": "lib/"}
+    }
+}
+</code></pre>
+
+<p>Notice the <code>require</code> property. It tells Composer which packages this one depends on, so that it can install them. A php version can also be specified; Composer doesn&rsquo;t handle php upgrades but it can throw an error if it finds the current php installation doesn&rsquo;t match the requirements.</p>
+
+<p>Also notice the <code>autoload</code> property. It&rsquo;s there to tell PSR-0 compatible autoloaders that the <code>My</code> namespace maps to the {bundle root}/lib folder.</p>
+
+<p>3) Initialize a git repository for the package</p>
+
+<pre><code>cd {package root}
+git init
+git add .
+git commit -m "Initial commit"
+</code></pre>
+
+<p>Composer leverages git tags and branches, mapping them to version and stability levels. This lets you specify exactly what version you want for your project.</p>
+
+<p>In recap, I ended up with this file structure&hellip;</p>
+
+<pre><code>entitiesbundle/      Doctrine Entities (Composer package)
+  |_ .git
+  |_ .gitignore
+  |_ composer.json
+  |_ lib/
+    |_ My
+      |_ EntitiesBundle
+        |_ ...
+</code></pre>
+
+<p>&hellip; and a package ready for distribution. If I wanted to I could now push it to github, bitbucket or pretty much anywhere else: Composer can use repositories other than Packagist, as we&rsquo;ll see in a minute.</p>
+
+<h3>Installing the package</h3>
+
+<p>Time to tell the Silex app to install it. This meant of course opening its <code>composer.json</code>. I should explain both packages and projects use that file. The one in a package holds its metadata like name, author identification, namespace and dependencies; the one in a project is basically just a list of dependencies. This is what the file on the landing pages project looked like initially:</p>
+
+<pre><code>{
+    "require": {
+        "silex/silex": "1.0.*@dev",
+        "twig/twig": "&gt;=1.8,&lt;2.0-dev",
+    }
+}
+</code></pre>
+
+<p>Pretty simple, basically just requiring silex and twig. They both declare a bunch of dependencies of their own, but Composer resolves and downloads all that for me.</p>
+
+<p>Here&rsquo;s the file after declaring my package:</p>
+
+<pre><code>{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "/Users/pedro/project/tranquility/entitiesbundle"
+        }
+    ],
+    "require": {
+        "silex/silex": "1.0.*@dev",
+        "twig/twig": "&gt;=1.8,&lt;2.0-dev",
+        "my/entitiesbundle": "dev-master",
+        "dflydev/doctrine-orm-service-provider": "1.0.*@dev"
+    }
+}
+</code></pre>
+
+<p>That <code>repositories</code> bit tells Composer where to look for packages <em>in addition</em> to Packagist. In my case, it&rsquo;s a local path under version control.</p>
+
+<p><code>"my/entitiesbundle": "dev-master"</code> is the line that actually declares my package as a dependency. <code>"dev-master"</code> tells it to pick up whatever&rsquo;s in the master branch, regardless of stability.</p>
+
+<p><code>"dflydev/doctrine-orm-service-provider": "1.0.*@dev"</code> is a nice service provider for Silex (also Pimple and Cilex) that simplifies the use of Doctrine ORM. But that&rsquo;s beyond the scope of this piece.</p>
+
+<h3>Fun time</h3>
+
+<pre><code>cd {silex root}
+composer update
+</code></pre>
+
+<p>And we&rsquo;re done! Assuming the <a href="https://github.com/dflydev/dflydev-doctrine-orm-service-provider">Doctrine ORM Service Provider</a> is set up correctly, I can now reuse my doctrine entities in the Landing Pages sub-project. Whenever I make a change to them, just have to commit it and run <code>composer update</code>. This last step can be automated with a post-commit hook.</p>
+
+<h2>Conclusion</h2>
+
+<p>We all know code duplication is bad and modularity is good. The adoption of PSR-0 goes a long way towards making code distributable and therefore reusable, but by itself is insufficient. A good package management tool like Composer helps in that regard.</p>
+
+<p>Building modular code also encourages the developer to think of a web application not as a tightly integrated stack, but as a collection of components each doing a specific job. This is good because decoupled code is testable code. And testable code, covered by a good test suite, saves time on any non-trivial project under active development.</p>
+
+<p>Reusing my Doctrine Entities in the Silex sub-project might not have been strictly necessary, as I could have simply queried the database directly, but it was a great way of learning about Composer from the perspective of actually building packages for it and made me reflect on practical ways of implementing modular design for my code.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/22/introducing-clarity/">Introducing Clarity</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-22T01:35:31+01:00" pubdate data-updated="true">Apr 22<span>nd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><a href="https://claritychat.com"><img src="https://dl.dropboxusercontent.com/u/25175935/clarity_post.png" alt="Clarity" /></a></p>
+
+<p>Team chat apps are all the rage these days, and little wonder.</p>
+
+<p>The larger the team,
+the more difficult it is for everyone to be on the same IM network. Plus, IM
+is awkward for more than two people. And good luck keeping logs when everyone
+keeps switching from mobile to laptop and back.</p>
+
+<p>Enter web chat apps.</p>
+
+<p>Because a web app runs on the browser, there&rsquo;s nothing to download. Just
+log onto a website and you&rsquo;re good to go. Plus, logs are saved automatically in the server
+and, as a bonus, chat rooms can be persistent.</p>
+
+<p>Sadly, having sampled quite a few offerings, I think there&rsquo;s a problem.
+Some apps are too complicated, offering many features but requiring you to learn
+yet another formatting system. Others are very expensive.
+Still others can&rsquo;t decide whether they&rsquo;re free or not. Some impose a team member
+limit. Others only allow a few simultaneous connections. All in a bid to sell you
+&ldquo;extra features&rdquo; and squeeze a few more dollars just so you can have a normal
+chat experience.</p>
+
+<p>So I went ahead and made <strong><a href="https://claritychat.com">Clarity</a></strong>, a simple team chat web app
+with a simple pricing model (just $9/month per project) and no limits on users or chat rooms. It&rsquo;s real time,
+so you can have normal chats with your colleagues, and it&rsquo;s also persistent so
+people can communicate with their team without everyone needing to be online at the
+same time. Chat history is persistent too, so it&rsquo;s always possible to recall
+what was said.</p>
+
+<p>It&rsquo;s <strong><a href="https://claritychat.com">online now</a></strong>.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/04/16/google-glass/">Google Glass</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-04-16T12:25:53+01:00" pubdate data-updated="true">Apr 16<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><a href="http://www.google.com/glass/start/">Google Glass</a> looks like an amazing piece of kit.
+But do I want one? Well&hellip;</p>
+
+<ul>
+<li>It looks ridiculous.</li>
+<li>It&rsquo;s a huge privacy concern for other people.</li>
+<li>Issuing voice commands in public is silly.</li>
+</ul>
+
+
+<p>So no, not keen on wearing it in public every day at all.</p>
+
+<p>In private, though&hellip;</p>
+
+<ul>
+<li>Taking in on a trek through unknown country seems potentially useful.</li>
+<li>Summoning a manual or an example video while working on my mountain bike would be nice.</li>
+<li>Wearing this under my paintball goggles in order to access map and tactical information would be awesome.</li>
+</ul>
+
+
+<p>So yeah, I guess I want one. I just won&rsquo;t be seen wearing it.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/12/on-ignorance/">On Ignorance</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-12T00:20:44+00:00" pubdate data-updated="true">Mar 12<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>So I just watched a couple videos of some pasty spanish dudes <a href="http://www.verdade-carnal.info/">explaining</a> that they love veganism because of <a href="http://www.youtube.com/watch?v=uuK65NqoiTo">photoshopped sci-fi landscapes</a>. I&rsquo;m revolted at the degree to which their message is engineered for maximum dramatic effect at the expense of factual accuracy.</p>
+
+<p>By carefully peppering a few crumbs of truth across an argument, it&rsquo;s possible to make all of it come across as truthful by association. An audience that&rsquo;s not in full posession of the facts will easily be swayed by such arguments and intelligence makes little difference.</p>
+
+<p>Preying upon ignorant audiences is easy and entirely too effective. The only defence is knowledge.</p>
+
+<p>Don&rsquo;t be a puppet. Always be learning.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/07/coming-to-work-on-out-of-office-day/">Coming to Work on Out of Office Day</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-07T10:58:07+00:00" pubdate data-updated="true">Mar 7<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Today is, apparently, <a href="https://www.facebook.com/outofofficeday">Out of Office Day</a> here in Portugal. It&rsquo;s a movement to raise awareness on remote working and as such I think it&rsquo;s a brilliant idea.</p>
+
+<p>Indeed, I&rsquo;m always going on about how mandatory office attendance and rigid 8+ hour workdays are not at all suited to today&rsquo;s information economy.</p>
+
+<p>But I don&rsquo;t like to do things just for the sake of it. And I don&rsquo;t think that working remotely should be some kind of dogma. I believe in choosing what&rsquo;s best for one&rsquo;s needs.</p>
+
+<p>So I chose not to adhere to Out of Office Day because it just happens that today I&rsquo;d like to see my peers face to face and float ideas around, hoping for the sort of conversation that arises more easily when people are in the same vicinity.</p>
+
+<p>I&rsquo;m just glad I&rsquo;m allowed to make that choice.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/06/schools-should-teach-how-to-code/">Schools Should Teach How to Code</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-06T16:05:50+00:00" pubdate data-updated="true">Mar 6<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>There&rsquo;s a reason why programming is done in something called a <em>language</em>. Programming is a form of communication, in which one tells machines what they must do.</p>
+
+<p>Many years ago in my country most people worked in fields and factories. Bills were only passed to make elementary education mandatory when it became clear that workers needed to be literate enough to understand instruction manuals for the machinery they operated.</p>
+
+<p>These days, jobs are disappearing and many believe they&rsquo;re gone for good: many tasks are simply done faster and better by robots and/or computers. Those who don&rsquo;t speak Machine are at a distinct disadvantage, having to rely on programmers to tell their computerized servants about their business requirements.</p>
+
+<p>Learning to read and write doesn&rsquo;t force you to become a professional writer, they&rsquo;re just skills that help with whatever it is you choose to do for a living.</p>
+
+<p>I think it&rsquo;s much the same with programming, so schools should teach kids at least the rudiments of code. I know I&rsquo;ll teach mine.</p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/03/old-from-posterous/">Posterous Archives</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-03T02:58:19+00:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&rsquo;m not sure I want to move my old posts at Posterous to this blog, so I moved them to wordpress.com instead.</p>
+
+<p>Here&rsquo;s the link if you&rsquo;re interested:
+<a href="http://pedrogilcandeias.wordpress.com/">http://pedrogilcandeias.wordpress.com/</a></p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2013/03/03/new-blog/">New Blog</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-03-03T02:24:22+00:00" pubdate data-updated="true">Mar 3<span>rd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I&rsquo;ve been meaning to build my own blogging app for a while now. Something simpler than my current blog at Posterous, without all the client-side scripts and extraneous social features.</p>
+
+<p>Now that Posterous is <a href="http://blog.posterous.com/thanks-from-posterous">shutting down</a>, I&rsquo;m out of excuses. So here it is. Check out the <a href="https://github.com/pgscandeias/blog">source</a>.</p>
+
+<p>By the way, my old posts from Posterous can be found here:<br/>
+<a href="http://pedrogilcandeias.wordpress.com/">http://pedrogilcandeias.wordpress.com/</a></p>
 </div>
   
   
@@ -125,7 +698,23 @@ Nice.</p>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2014/01/28/a-testar-o-octopress/">A Testar O Octopress</a>
+        <a href="/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp/">Symfony vs Laravel vs Codeigniter vs Plain PHP</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/14/reusing-my-own-code-with-composer/">Reusing My Own Code With Composer</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/22/introducing-clarity/">Introducing Clarity</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/16/google-glass/">Google Glass</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/12/on-ignorance/">On Ignorance</a>
       </li>
     
   </ul>

@@ -5,14 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Blog Archive - Pedro Gil Candeias</title>
+  <title>Projects - Pedro Gil Candeias</title>
   <meta name="author" content="Pedro Gil Candeias">
 
   
-  <meta name="description" content="Blog Archive 2013 Symfony vs Laravel vs Codeigniter vs Plain PHP
-Aug 13 2013 Reusing My Own Code With Composer
-Jun 14 2013 Introducing Clarity
-Apr &hellip;">
+  <meta name="description" content="Projects Feb 20th, 2013 Personal projects, past and present, a tech overview. This blog When Posterous announced it was to shut down, I decided it &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -21,7 +18,7 @@ Apr &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://pgscandeias.github.io/blog/archives">
+  <link rel="canonical" href="http://pgscandeias.github.io/projects">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="Pedro Gil Candeias" type="application/atom+xml">
@@ -70,107 +67,91 @@ Apr &hellip;">
 <article role="article">
   
   <header>
-    <h1 class="entry-title">Blog Archive</h1>
-    
+    <h1 class="entry-title">Projects</h1>
+    <p class="meta">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-02-20T16:49:37+00:00" pubdate data-updated="true">Feb 20<span>th</span>, 2013</time></p>
   </header>
   
-  <div id="blog-archives">
+  <p>Personal projects, past and present, a tech overview.</p>
+
+<h3><a href="https://github.com/pgscandeias/blog">This blog</a></h3>
+
+<p>When Posterous announced it was to shut down, I decided it was time to move to a lighter, <em>simpler</em> (there&rsquo;s a trend here) blogging system that let me write in Markdown. So I made this one.</p>
+
+<p>It runs on custom php code, similar in form to microframeworks like Slim or Silex but with no unused features. It&rsquo;s little more than a routing system and a thin wrapper around MongoDB. It&rsquo;s lightweight and very fast.</p>
+
+<h3><a href="https://github.com/pgscandeias/greenspace">Greenspace</a></h3>
+
+<p>PHP pays the bills, but that doesn&rsquo;t mean I can&rsquo;t do other stuff. Greenspace is an exploration of Python, Node.js, MongoDB and messaging systems, taking the form of a turn-based space strategy game.</p>
+
+<p>A browser client done in jquery and handlebars.js connects to a node.js frontend which in turns uses RabbitMQ to route requests to a Python backend which runs all (ok most) the business logic and database operations. Each element of the stack is there for a reason beyond my desire to experiment:</p>
+
+<ul>
+<li><strong><em>Jquery + Handlebars</em></strong> for convenience</li>
+<li><strong><em>Node.js</em></strong> it&rsquo;s fast and solves concurrency</li>
+<li><strong><em>RabbitMQ</em></strong> separates concerns between frontend and backend</li>
+<li><strong><em>Python</em></strong> needs no justification, it&rsquo;s just a sweet langage</li>
+<li><strong><em>MongoDB</em></strong> is a good fit for the desired data model</li>
+</ul>
+
+
+<h3><a href="http://threddie.com">Threddie</a> 2010</h3>
+
+<p>A simplified brainstorming app that melds real time chat with reddit-style threaded discussion.</p>
+
+<p>Client side it&rsquo;s powered by jquery, achieving semi-real time updates via traditional polling with ajax. Server side it&rsquo;s a custom php5.3 MVC framework, lacking in features but light and fast.</p>
+
+<h3><a href="http://gomercato.com">Mercato</a> 2012 (discontinued)</h3>
+
+<p>An extremely simplified e-commerce platform for small vendors, available only in the portuguese language.</p>
+
+<p>A Symfony2 app running with the Doctrine2 ORM over a MySQL database. Client side there&rsquo;s jquery, ajax &amp; responsive web design.</p>
+
+  
+    <footer>
+      <p class="meta">
+        
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Pedro Gil Candeias</span></span>
+
+        
+
+
+
+
+
 
 
 
   
-  <h2>2013</h2>
 
-<article>
+
+<time datetime="2013-02-20T16:49:37+00:00" pubdate data-updated="true">Feb 20<span>th</span>, 2013</time>
+        
+      </p>
+      
+        <div class="sharing">
   
-<h1><a href="/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp/">Symfony vs Laravel vs Codeigniter vs Plain PHP</a></h1>
-<time datetime="2013-08-13T11:12:24+01:00" pubdate><span class='month'>Aug</span> <span class='day'>13</span> <span class='year'>2013</span></time>
-
-
-</article>
-
-
-
-<article>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://pgscandeias.github.io/projects/index.html" data-via="" data-counturl="http://pgscandeias.github.io/projects/index.html" >Tweet</a>
   
-<h1><a href="/blog/2013/06/14/reusing-my-own-code-with-composer/">Reusing My Own Code With Composer</a></h1>
-<time datetime="2013-06-14T14:11:15+01:00" pubdate><span class='month'>Jun</span> <span class='day'>14</span> <span class='year'>2013</span></time>
-
-
-</article>
-
-
-
-<article>
   
-<h1><a href="/blog/2013/04/22/introducing-clarity/">Introducing Clarity</a></h1>
-<time datetime="2013-04-22T01:35:31+01:00" pubdate><span class='month'>Apr</span> <span class='day'>22</span> <span class='year'>2013</span></time>
-
-
-</article>
-
-
-
-<article>
   
-<h1><a href="/blog/2013/04/16/google-glass/">Google Glass</a></h1>
-<time datetime="2013-04-16T12:25:53+01:00" pubdate><span class='month'>Apr</span> <span class='day'>16</span> <span class='year'>2013</span></time>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2013/03/12/on-ignorance/">On Ignorance</a></h1>
-<time datetime="2013-03-12T00:20:44+00:00" pubdate><span class='month'>Mar</span> <span class='day'>12</span> <span class='year'>2013</span></time>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2013/03/07/coming-to-work-on-out-of-office-day/">Coming to Work on Out of Office Day</a></h1>
-<time datetime="2013-03-07T10:58:07+00:00" pubdate><span class='month'>Mar</span> <span class='day'>07</span> <span class='year'>2013</span></time>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2013/03/06/schools-should-teach-how-to-code/">Schools Should Teach How to Code</a></h1>
-<time datetime="2013-03-06T16:05:50+00:00" pubdate><span class='month'>Mar</span> <span class='day'>06</span> <span class='year'>2013</span></time>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2013/03/03/old-from-posterous/">Posterous Archives</a></h1>
-<time datetime="2013-03-03T02:58:19+00:00" pubdate><span class='month'>Mar</span> <span class='day'>03</span> <span class='year'>2013</span></time>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2013/03/03/new-blog/">New Blog</a></h1>
-<time datetime="2013-03-03T02:24:22+00:00" pubdate><span class='month'>Mar</span> <span class='day'>03</span> <span class='year'>2013</span></time>
-
-
-</article>
-
 </div>
 
+      
+    </footer>
   
 </article>
 

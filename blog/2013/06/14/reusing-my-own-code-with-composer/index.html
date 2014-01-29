@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Reusing My Own Code With Composer - Pedro Gil Candeias</title>
+  <meta name="author" content="Pedro Gil Candeias">
+
+  
+  <meta name="description" content="Composer Composer is a package manager for php that&rsquo;s gained a lot of traction lately. It ties in nicely with version control systems like git &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://pgscandeias.github.io/blog/2013/06/14/reusing-my-own-code-with-composer">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Pedro Gil Candeias" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Pedro Gil Candeias</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:pgscandeias.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Reusing My Own Code With Composer</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-14T14:11:15+01:00" pubdate data-updated="true">Jun 14<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2>Composer</h2>
+
+<p><a href="https://getcomposer.org">Composer</a> is a package manager for php that&rsquo;s gained a lot of traction lately. It ties in nicely with version control systems like git, greatly simplifies dependency management, and has a lot of great packages at <a href="https://packagist.org/">Packagist</a>.</p>
+
+<p><a href="http://symfony.com">Symfony</a>, an extremely popular php framework, has been using Composer since version 2.1, which is only logical as both tools leverage the <a href="https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md">PSR-0</a> interoperability standard. <a href="http://silex.sensiolabs.org">Silex</a> too, Symfony&rsquo;s lightweight brother, uses Composer for installation and dependency management.</p>
+
+<h2>In practice</h2>
+
+<p>Which brings me nicely to a product I&rsquo;m currently building. It&rsquo;s a landing page platform for online marketing campaigns, and it&rsquo;s split in two sub-projects:</p>
+
+<ul>
+<li>The client and administration backoffices, made in Symfony;</li>
+<li>A separate website in Silex just for serving the landing pages and gathering data.</li>
+</ul>
+
+
+<p>Both websites are written in php and talk to the same database, which means there&rsquo;s a clear opportunity for reusing the database access code. I could simply copy my Symfony entities over to the Silex application, but then I&rsquo;d need to keep track of changes in my head and manually ensure both projects were up to date.</p>
+
+<p>Or I could move the entities into their own bundle, turn it into a separate project versioned with git, and use Composer to install and manage it in both websites like a boss.</p>
+
+<h3>Isolating the entities</h3>
+
+<p>I began by moving them into a separate bundle called simply My\EntitiesBundle, dropping them nicely in the <code>src/My/EntitiesBundle/Entity</code> folder and running a quick find &amp; replace to update their namespaces and all the <code>use</code> statements. Because Symfony2 bundles follow the PSR-0, I was already halfway done.</p>
+
+<h3>Creating a package</h3>
+
+<p>1) Move the bundle somewhere outside of the Symfony app. This will be the package.</p>
+
+<pre><code>cd {symfony root}
+mkdir -p ../entitiesbundle/lib/My
+mv src/My/EntitiesBundle ../entitiesbundle/lib/My
+</code></pre>
+
+<p>2) Then create <code>composer.json</code> at the package root</p>
+
+<pre><code>{
+    "name": "my/entitiesbundle",
+    "type": "library",
+    "description": "Doctrine entities for the Tranquility project",
+    "license": "private",
+    "authors": [
+        {
+            "name": "Pedro Gil Candeias",
+            "email": "pedro@pedrogilcandeias.com"
+        }
+    ],
+    "require": {
+        "php": "&gt;=5.3.0",
+        "friendsofsymfony/user-bundle": "*",
+        "doctrine/orm": "~2.2,&gt;=2.2.3",
+        "doctrine/doctrine-bundle": "1.2.*"
+    },
+    "autoload": {
+        "psr-0": {"My": "lib/"}
+    }
+}
+</code></pre>
+
+<p>Notice the <code>require</code> property. It tells Composer which packages this one depends on, so that it can install them. A php version can also be specified; Composer doesn&rsquo;t handle php upgrades but it can throw an error if it finds the current php installation doesn&rsquo;t match the requirements.</p>
+
+<p>Also notice the <code>autoload</code> property. It&rsquo;s there to tell PSR-0 compatible autoloaders that the <code>My</code> namespace maps to the {bundle root}/lib folder.</p>
+
+<p>3) Initialize a git repository for the package</p>
+
+<pre><code>cd {package root}
+git init
+git add .
+git commit -m "Initial commit"
+</code></pre>
+
+<p>Composer leverages git tags and branches, mapping them to version and stability levels. This lets you specify exactly what version you want for your project.</p>
+
+<p>In recap, I ended up with this file structure&hellip;</p>
+
+<pre><code>entitiesbundle/      Doctrine Entities (Composer package)
+  |_ .git
+  |_ .gitignore
+  |_ composer.json
+  |_ lib/
+    |_ My
+      |_ EntitiesBundle
+        |_ ...
+</code></pre>
+
+<p>&hellip; and a package ready for distribution. If I wanted to I could now push it to github, bitbucket or pretty much anywhere else: Composer can use repositories other than Packagist, as we&rsquo;ll see in a minute.</p>
+
+<h3>Installing the package</h3>
+
+<p>Time to tell the Silex app to install it. This meant of course opening its <code>composer.json</code>. I should explain both packages and projects use that file. The one in a package holds its metadata like name, author identification, namespace and dependencies; the one in a project is basically just a list of dependencies. This is what the file on the landing pages project looked like initially:</p>
+
+<pre><code>{
+    "require": {
+        "silex/silex": "1.0.*@dev",
+        "twig/twig": "&gt;=1.8,&lt;2.0-dev",
+    }
+}
+</code></pre>
+
+<p>Pretty simple, basically just requiring silex and twig. They both declare a bunch of dependencies of their own, but Composer resolves and downloads all that for me.</p>
+
+<p>Here&rsquo;s the file after declaring my package:</p>
+
+<pre><code>{
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "/Users/pedro/project/tranquility/entitiesbundle"
+        }
+    ],
+    "require": {
+        "silex/silex": "1.0.*@dev",
+        "twig/twig": "&gt;=1.8,&lt;2.0-dev",
+        "my/entitiesbundle": "dev-master",
+        "dflydev/doctrine-orm-service-provider": "1.0.*@dev"
+    }
+}
+</code></pre>
+
+<p>That <code>repositories</code> bit tells Composer where to look for packages <em>in addition</em> to Packagist. In my case, it&rsquo;s a local path under version control.</p>
+
+<p><code>"my/entitiesbundle": "dev-master"</code> is the line that actually declares my package as a dependency. <code>"dev-master"</code> tells it to pick up whatever&rsquo;s in the master branch, regardless of stability.</p>
+
+<p><code>"dflydev/doctrine-orm-service-provider": "1.0.*@dev"</code> is a nice service provider for Silex (also Pimple and Cilex) that simplifies the use of Doctrine ORM. But that&rsquo;s beyond the scope of this piece.</p>
+
+<h3>Fun time</h3>
+
+<pre><code>cd {silex root}
+composer update
+</code></pre>
+
+<p>And we&rsquo;re done! Assuming the <a href="https://github.com/dflydev/dflydev-doctrine-orm-service-provider">Doctrine ORM Service Provider</a> is set up correctly, I can now reuse my doctrine entities in the Landing Pages sub-project. Whenever I make a change to them, just have to commit it and run <code>composer update</code>. This last step can be automated with a post-commit hook.</p>
+
+<h2>Conclusion</h2>
+
+<p>We all know code duplication is bad and modularity is good. The adoption of PSR-0 goes a long way towards making code distributable and therefore reusable, but by itself is insufficient. A good package management tool like Composer helps in that regard.</p>
+
+<p>Building modular code also encourages the developer to think of a web application not as a tightly integrated stack, but as a collection of components each doing a specific job. This is good because decoupled code is testable code. And testable code, covered by a good test suite, saves time on any non-trivial project under active development.</p>
+
+<p>Reusing my Doctrine Entities in the Silex sub-project might not have been strictly necessary, as I could have simply queried the database directly, but it was a great way of learning about Composer from the perspective of actually building packages for it and made me reflect on practical ways of implementing modular design for my code.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Pedro Gil Candeias</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-14T14:11:15+01:00" pubdate data-updated="true">Jun 14<span>th</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://pgscandeias.github.io/blog/2013/06/14/reusing-my-own-code-with-composer/" data-via="" data-counturl="http://pgscandeias.github.io/blog/2013/06/14/reusing-my-own-code-with-composer/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/04/22/introducing-clarity/" title="Previous Post: Introducing Clarity">&laquo; Introducing Clarity</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp/" title="Next Post: Symfony vs Laravel vs Codeigniter vs Plain PHP">Symfony vs Laravel vs Codeigniter vs Plain PHP &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp/">Symfony vs Laravel vs Codeigniter vs Plain PHP</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/14/reusing-my-own-code-with-composer/">Reusing My Own Code With Composer</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/22/introducing-clarity/">Introducing Clarity</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/16/google-glass/">Google Glass</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/12/on-ignorance/">On Ignorance</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Pedro Gil Candeias -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

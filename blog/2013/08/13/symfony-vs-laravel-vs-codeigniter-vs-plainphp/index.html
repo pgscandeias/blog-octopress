@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Symfony vs Laravel vs Codeigniter vs Plain PHP - Pedro Gil Candeias</title>
+  <meta name="author" content="Pedro Gil Candeias">
+
+  
+  <meta name="description" content="I had a couple of hours to kill on a train journey recently and decided to compare a few php frameworks just for kicks. The goal of the test was &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://pgscandeias.github.io/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Pedro Gil Candeias" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Pedro Gil Candeias</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:pgscandeias.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/about">About</a></li>
+  <li><a href="/projects">Projects</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Symfony vs Laravel vs Codeigniter vs Plain PHP</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-13T11:12:24+01:00" pubdate data-updated="true">Aug 13<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I had a couple of hours to kill on a train journey recently and decided to compare a few php frameworks just for kicks. The goal of the test was twofold:</p>
+
+<ul>
+<li>Measure performance overhead</li>
+<li>Compare the coding styles encouraged by each framework</li>
+</ul>
+
+
+<p>A Debian7 / nginx  / php 5.5 VM was spun up using Vagrant, with pretty much the default settings. Opcache was enabled, but otherwise no caching was involved. A mysql 5.5 database was created, with a &lsquo;custmers&rsquo; table holding 200 rows. Benchmarks were to be conducted on a page displaying the first N customers, as specified by a &lsquo;count&rsquo; querystring parameter. A benchmark was conducted upon a static file in order to get a baseline performance reading.</p>
+
+<p><strong>Disclaimer</strong>: these tests were <strong>not</strong> conducted with anything resembling statistical rigour. And, as is the case with all things benchmarky, your mileage may and will bloody well vary.</p>
+
+<p>With that out of the way&hellip;</p>
+
+<p><em>Setup</em></p>
+
+<pre><code>Host:   OSX 10.8.4 / Intel i5 2.3Ghz / 8Gb / SSD
+VM:     VirtualBox + Debian Wheezy / 1Gb
+
+Stack:  nginx 1.4.2 / php5-fpm / php 5.5.0 / mysql 5.5.31
+</code></pre>
+
+<p><em>Read top $count records from the customers table and render a template with that information.</em></p>
+
+<pre><code>ab -c 5 -n 1000 http://bench.(*).dev/customers?count=5
+</code></pre>
+
+<h2>Results</h2>
+
+<pre><code>Framework           ORM         Templating  Req/s       Time /req
+
+static file         -           -           2654.53     1.884
+
+Symfony 2.3.5       Doctrine    Twig        50.83       98.365
+Laravel 4           Eloquent    Blade       54.43       92.006
+Codeigniter 2.1.4   CI_Model    php         302.28      16.541
+Bespoke PHP         -           php         433.33      11.538
+Single file php     -           php         1624.66     3.078
+</code></pre>
+
+<p><strong>Bespoke PHP</strong> was a piece of custom code consisting of a light routing library matching url patterns to anonymous functions in the style of microframeworks like Slim and Silex.</p>
+
+<p><strong>Single file php</strong>, like the name implies, was a single file with database access at the top and html mixed with php at the bottom. Just like old times.</p>
+
+<h2>Thoughts</h2>
+
+<p><strong>Symfony</strong> has the greatest overhead, as expected. Every single request runs through lots and lots of classes, providing hook points for injecting code at any point; an opcode cache mitigates the problem, but there&rsquo;s no way around running lots of code.</p>
+
+<p>The good news is that, with PSR-0 autoloading and a decent dependency injection container, it&rsquo;s quite clever about what it runs after the bare minimum. Even if you have a huge application with lots of models, controllers and assorted libraries, it only loads what it needs for each request. So yes, all of Symfony&rsquo;s flexibility implies quite some base overhead, but resource consumption doesn&rsquo;t necessarily grow with the application.</p>
+
+<p>There&rsquo;s a lot of quality bundles available at <a href="https://packagist.org/search/?q=symfony">Packagist</a>, documentation is second to none and, despite heavy development, stuff rarely breaks on new releases. When something does break, chances are someone caught it before you did and documented the solution &ndash; which is usually pulled into the next release very quickly.</p>
+
+<p>Symfony configuration does tend to be quite dense and its namespacing practices do lean towards the verbose. But on the other hand, everything is nicely decoupled. Testing and reusing code comes very naturally in a Symfony project.</p>
+
+<p><strong>Laravel</strong> is touted as a great alternative to Codeigniter, mixing its simple interface with the power of Composer-driven package management. It uses a LOT of Symfony components, to the point where I find using Laravel is a bit like running Symfony with different ORM and templating engines. It sits somewhere between Silex and Symfony in complexity and available toolset.</p>
+
+<p>Why they introduced yet another ORM and templating engine, though, is beyond me. Blade has an inconsistent interface, using brackets for output and @ signs for control structures. Eloquent is&hellip; a bit weird. Better than Codeigniter&rsquo;s active record implementation for sure, but it felt about as ugly to use. Laravel also makes extensive use of Singletons, which I find very strange in a framework that&rsquo;s based on Symfony. Singletons are a bit of a cheat, essentialy serving as global variables. They have their uses, but have little raison d&#8217;être when a dependency injection container is available.</p>
+
+<p>I was a bit surprised at Laravel benchmarking neck and neck with Symfony in terms of speed. But considering both frameworks are based on the same foundation, this test was quite simple and Symfony only loads what it needs, the results make sense.</p>
+
+<p><strong>Codeigniter</strong> benefits tremendously from its inherent simplicity in this sort of benchmark. In this scenario, CI executes little else beyond database initialization and route matching before calling the controller so it does go like the clappers as advertised. Trouble is, it&rsquo;s not very bright. Its router has no knowledge of HTTP methods other than GET, its request handler only adds POST to that list, there are no options to serialize responses to anything other than html and it proudly advocates plain old php as the templating engine. Which is a fine choice if you&rsquo;re looking for raw speed but not very good for maintainability at all. And the less said about CI&rsquo;s idea of an ActiveRecord implementation, the better.</p>
+
+<p>Then there&rsquo;s the killer. Codeigniter, having no idea the PSR0 exists or even that php5.3 is out, does not employ namespacing. To prevent class name collisions, its core classes have silly olde style names like <code>CI_Model</code> and <code>CI_DB_MySQL</code>. And should you wish to use libraries, or plugins, or helpers, which so far as I can tell differ only in the folder they&rsquo;re installed in, you must declare them all in the bootstrapper. Which duly loads them to memory. It&rsquo;s easy to see how this can become a problem on larger applications with lots of libraries.</p>
+
+<p>On simple projects, Codeigniter is good enough. On more compelex ones, its shortcomings can be overcome by simply relegating it to the role of router and using Composer to install a better ORM, an actual templating engine, whatever libraries are needed, etc. But then why use CI at all? It&rsquo;ll just be a bad router getting in the way of your application.</p>
+
+<p>Codeigniter was great in its day. That day is now well and truly past, and no amount of <code>Hello World</code> speed can make up for its flaws.</p>
+
+<h2>Closing words</h2>
+
+<p>The very act of using a framework is a choice of convenience over speed. Frameworks bring order to chaos, speed to both early and late stages of development. That convenience costs performance, but we use them anyway because, in most places, developer time is way more expensive than server time. In most places, most of the time, you can easily add more servers to your frontend cluster or beef up your database machines. But hiring new skilled developers is hard enough; convincing good developers to work in messy, unstructured codebases these days is a hard sale indeed.</p>
+
+<p>I like Symfony. It makes development logical and, dare I say it, easy. I&rsquo;ve been using it for most of my personal projects and all of my freelancing ones for over two years now. There&rsquo;s a steep learning curve, but the exceptional documentation makes it easy to climb. And it encourages the use of good programming practices like inversion of control, dependency injection, single resposibility principle, and more. Performance wise, commodity servers like DigitalOcean&rsquo;s $5 vps can run it at well below 100ms per request under moderate loads, making scale issues moot for web apps in their early stages. I wouldn&rsquo;t run an ad network on it, though.</p>
+
+<p>If I did have to deploy something like an ad network in php, I&rsquo;d probably go for bespoke code on the frontends <em>but</em> code the backoffices in Symfony simply due to how good the toolset is and how maintainable Symfony projects end up being. I&rsquo;m not convinced Laravel, with its limited configuration options and opinionated development practices is a better choice, especially since it doesn&rsquo;t bring a significant performance boost to the table. It may be easier to get into, though, which is in itself a huge plus and just might make it the right framework for many projects.</p>
+
+<p>As for Codeigniter, well, we have a big project running on it at work and lets just say thing aren&rsquo;t getting any easier.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Pedro Gil Candeias</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-13T11:12:24+01:00" pubdate data-updated="true">Aug 13<span>th</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://pgscandeias.github.io/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp/" data-via="" data-counturl="http://pgscandeias.github.io/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/06/14/reusing-my-own-code-with-composer/" title="Previous Post: Reusing my own code with Composer">&laquo; Reusing my own code with Composer</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/08/13/symfony-vs-laravel-vs-codeigniter-vs-plainphp/">Symfony vs Laravel vs Codeigniter vs Plain PHP</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/14/reusing-my-own-code-with-composer/">Reusing My Own Code With Composer</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/22/introducing-clarity/">Introducing Clarity</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/04/16/google-glass/">Google Glass</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/12/on-ignorance/">On Ignorance</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - Pedro Gil Candeias -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
